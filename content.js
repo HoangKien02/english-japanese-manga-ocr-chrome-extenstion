@@ -10,11 +10,15 @@ let sidebarIframe = null;
 let sidebarContainer = null;
 let selectionOverlay = null;
 let settings = {};
+let ocrWorkerInjected = false;
+let ocrRequestId = 0;
 
 // Initialize
 function init() {
   console.log('Manga OCR content script loaded');
   loadSettings();
+  injectOCRWorker();
+  setupWorkerListener();
 }
 
 // Load settings
@@ -36,6 +40,38 @@ async function loadSettings() {
       autoClean: true
     };
   }
+}
+
+// Inject OCR worker script into page context
+function injectOCRWorker() {
+  if (ocrWorkerInjected) return;
+
+  const script = document.createElement('script');
+  script.src = chrome.runtime.getURL('ocr-worker.js');
+  script.onload = () => {
+    console.log('OCR worker injected');
+    ocrWorkerInjected = true;
+  };
+  (document.head || document.documentElement).appendChild(script);
+}
+
+// Setup listener for worker messages
+function setupWorkerListener() {
+  window.addEventListener('message', (event) => {
+    if (event.source !== window) return;
+
+    const message = event.data;
+    if (!message.type) return;
+
+    if (message.type === 'mangaOCR_progress') {
+      sendToSidebar('mangaOCR_ocrProgress', {
+        progress: message.progress,
+        status: message.status
+      });
+    } else if (message.type === 'mangaOCR_result') {
+      handleOCRResult(message.result);
+    }
+  });
 }
 
 // Listen for messages from background script
@@ -378,61 +414,21 @@ function cropImage(dataUrl, x, y, width, height) {
 // Perform OCR
 async function performOCR(imageDataUrl) {
   try {
-    // Dynamic import of Tesseract.js
-    sendToSidebar('mangaOCR_ocrProgress', {
-      progress: 10,
-      status: 'Loading OCR engine...'
-    });
-
-    // Load Tesseract from CDN
-    if (!window.Tesseract) {
-      await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
-    }
-
-    const { createWorker } = window.Tesseract;
-
-    sendToSidebar('mangaOCR_ocrProgress', {
-      progress: 20,
-      status: 'Initializing OCR worker...'
-    });
+    sendToSidebar('mangaOCR_ocrStart', {});
 
     // Determine language
     let lang = settings.language === 'auto' ? 'eng+jpn' : settings.language;
 
-    // Create worker
-    const worker = await createWorker(lang, 1, {
-      logger: (m) => {
-        console.log('OCR:', m);
+    // Generate request ID
+    const requestId = ++ocrRequestId;
 
-        if (m.status === 'recognizing text') {
-          const progress = 20 + (m.progress * 70);
-          sendToSidebar('mangaOCR_ocrProgress', {
-            progress: progress,
-            status: `Recognizing text... ${Math.round(m.progress * 100)}%`
-          });
-        }
-      }
-    });
-
-    sendToSidebar('mangaOCR_ocrProgress', {
-      progress: 25,
-      status: 'Processing image...'
-    });
-
-    // Perform recognition
-    const { data } = await worker.recognize(imageDataUrl);
-
-    await worker.terminate();
-
-    sendToSidebar('mangaOCR_ocrProgress', {
-      progress: 95,
-      status: 'Processing results...'
-    });
-
-    // Process results
-    const results = processOCRResults(data);
-
-    sendToSidebar('mangaOCR_ocrComplete', { results });
+    // Send OCR request to worker via postMessage
+    window.postMessage({
+      type: 'mangaOCR_performOCR',
+      requestId: requestId,
+      imageDataUrl: imageDataUrl,
+      language: lang
+    }, '*');
 
   } catch (error) {
     console.error('OCR error:', error);
@@ -442,33 +438,21 @@ async function performOCR(imageDataUrl) {
   }
 }
 
-// Process OCR results
-function processOCRResults(data) {
-  const results = [];
+// Handle OCR result from worker
+function handleOCRResult(result) {
+  if (result.success) {
+    // Apply auto-clean if enabled
+    const results = result.results.map(r => ({
+      text: settings.autoClean ? cleanText(r.text) : r.text,
+      confidence: r.confidence
+    }));
 
-  // Process lines
-  if (data.lines && data.lines.length > 0) {
-    data.lines.forEach(line => {
-      const text = line.text.trim();
-      if (text.length > 0) {
-        results.push({
-          text: settings.autoClean ? cleanText(text) : text,
-          confidence: line.confidence || 0
-        });
-      }
+    sendToSidebar('mangaOCR_ocrComplete', { results });
+  } else {
+    sendToSidebar('mangaOCR_ocrError', {
+      error: result.error || 'OCR processing failed'
     });
-  } else if (data.text) {
-    // Fallback to full text
-    const text = data.text.trim();
-    if (text.length > 0) {
-      results.push({
-        text: settings.autoClean ? cleanText(text) : text,
-        confidence: data.confidence || 0
-      });
-    }
   }
-
-  return results;
 }
 
 // Clean OCR text
@@ -477,17 +461,6 @@ function cleanText(text) {
     .replace(/\s+/g, ' ') // Normalize whitespace
     .replace(/[^\S\r\n]+/g, ' ') // Remove extra spaces
     .trim();
-}
-
-// Load external script
-function loadScript(src) {
-  return new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = src;
-    script.onload = resolve;
-    script.onerror = reject;
-    document.head.appendChild(script);
-  });
 }
 
 // Convert blob to base64

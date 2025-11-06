@@ -117,7 +117,8 @@ Access settings via the extension popup or right-click the extension icon → Op
 manga-ocr-extension/
 ├── manifest.json          # Extension manifest (v3)
 ├── background.js          # Service worker
-├── content.js             # Content script (injection & OCR)
+├── content.js             # Content script (injection & OCR coordination)
+├── ocr-worker.js          # Page-context worker (loads Tesseract.js)
 ├── popup.html/js          # Extension popup UI
 ├── sidebar.html/js/css    # OCR results sidebar
 ├── options.html/js        # Settings page
@@ -130,6 +131,9 @@ manga-ocr-extension/
 - **Languages**: English (`eng`) and Japanese (`jpn`) training data
 - **Processing**: Client-side WASM compilation
 - **Privacy**: No data leaves your browser in local mode
+- **CSP Compliance**: Tesseract.js loads in page context to avoid CSP restrictions
+
+**How it works**: The extension injects `ocr-worker.js` into the page context where Content Security Policy restrictions are less strict. This worker script loads Tesseract.js from CDN and performs OCR operations. The content script communicates with the worker via `postMessage` API.
 
 ### Permissions
 
