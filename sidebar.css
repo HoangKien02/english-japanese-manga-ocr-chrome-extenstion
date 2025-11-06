@@ -1,0 +1,84 @@
+/**
+ * Sidebar Container Styles
+ * These styles are injected into the host page to position the sidebar
+ */
+
+#manga-ocr-sidebar-container {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 400px;
+  height: 100vh;
+  z-index: 2147483647; /* Maximum z-index */
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.2);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  transition: transform 0.3s ease-in-out;
+}
+
+#manga-ocr-sidebar-container.hidden {
+  transform: translateX(100%);
+}
+
+#manga-ocr-sidebar-container iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+/* Region Selection Overlay */
+#manga-ocr-selection-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 2147483646;
+  cursor: crosshair;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+#manga-ocr-selection-box {
+  position: absolute;
+  border: 2px solid #667eea;
+  background: rgba(102, 126, 234, 0.1);
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.3);
+}
+
+.manga-ocr-selection-hint {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 16px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Capture Flash Effect */
+@keyframes flash {
+  0% {
+    background: rgba(255, 255, 255, 0);
+  }
+  50% {
+    background: rgba(255, 255, 255, 0.5);
+  }
+  100% {
+    background: rgba(255, 255, 255, 0);
+  }
+}
+
+.manga-ocr-flash {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 2147483645;
+  pointer-events: none;
+  animation: flash 0.3s ease-out;
+}

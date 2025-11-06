@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manga OCR</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 320px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .container {
+      padding: 20px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .logo {
+      font-size: 48px;
+      margin-bottom: 8px;
+    }
+
+    .title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .btn {
+      padding: 14px 16px;
+      border: none;
+      border-radius: 8px;
+      background: white;
+      color: #667eea;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-icon {
+      font-size: 18px;
+    }
+
+    .settings {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .setting-group {
+      margin-bottom: 12px;
+    }
+
+    .setting-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .setting-label {
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      opacity: 0.9;
+    }
+
+    select {
+      width: 100%;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.95);
+      color: #667eea;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    .checkbox-label {
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .footer {
+      text-align: center;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      font-size: 12px;
+    }
+
+    .footer-link {
+      color: white;
+      text-decoration: none;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+    }
+
+    .footer-link:hover {
+      opacity: 1;
+    }
+
+    .status {
+      text-align: center;
+      font-size: 11px;
+      margin-top: 8px;
+      opacity: 0.7;
+      min-height: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">📖</div>
+      <div class="title">Manga OCR</div>
+      <div class="subtitle">Extract text from manga pages</div>
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="toggleSidebar">
+        <span class="btn-icon">📚</span>
+        <span>Toggle Sidebar</span>
+      </button>
+
+      <button class="btn" id="captureRegion">
+        <span class="btn-icon">📷</span>
+        <span>Capture Region</span>
+      </button>
+
+      <button class="btn" id="capturePage">
+        <span class="btn-icon">🖼️</span>
+        <span>Capture Page</span>
+      </button>
+    </div>
+
+    <div class="settings">
+      <div class="setting-group">
+        <div class="setting-label">OCR Language</div>
+        <select id="languageSelect">
+          <option value="auto">Auto Detect</option>
+          <option value="eng">English</option>
+          <option value="jpn">Japanese</option>
+          <option value="eng+jpn">English + Japanese</option>
+        </select>
+      </div>
+
+      <div class="setting-group">
+        <div class="checkbox-group">
+          <input type="checkbox" id="showConfidence">
+          <label for="showConfidence" class="checkbox-label">Show confidence scores</label>
+        </div>
+      </div>
+
+      <div class="setting-group">
+        <div class="checkbox-group">
+          <input type="checkbox" id="autoClean">
+          <label for="autoClean" class="checkbox-label">Auto-clean text</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="footer-links">
+        <a href="#" class="footer-link" id="optionsLink">⚙️ Settings</a>
+        <a href="#" class="footer-link" id="helpLink">❓ Help</a>
+      </div>
+      <div class="status" id="status"></div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
